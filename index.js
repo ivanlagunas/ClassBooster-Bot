@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const Database = require("@replit/database");
 const keepAlive = require("./server");
+const Server = require("./servers")
 
 const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
 
@@ -14,7 +15,6 @@ for (const file of commandFiles) {
 
   client.commands.set(command.name, command);
 }
-
 
 ////////////////////DATABASE//////////////////////
 const db = new Database();
@@ -41,7 +41,13 @@ client.on("messageCreate", msg => {
   const args = msg.content.slice(prefix.length).split(/ +/);
   const command = args.shift().toLowerCase();
 
+
   switch (command) {
+
+    case "startclass":
+      client.commands.get('startclass').execute(msg, args, db);
+      break;
+      
     case "ping":
       client.commands.get('ping').execute(msg, args);
       break;
