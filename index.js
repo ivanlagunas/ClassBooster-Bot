@@ -4,7 +4,7 @@ const Database = require("@replit/database");
 const keepAlive = require("./server");
 const Server = require("./servers")
 
-const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
+const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS"] });
 
 const prefix = '.';
 client.commands = new Discord.Collection();
@@ -46,6 +46,10 @@ client.on("messageCreate", msg => {
 
     case "startclass":
       client.commands.get('startclass').execute(msg, args, db);
+      break;
+
+    case "creategroup":
+      client.commands.get('creategroup').execute(msg, args);
       break;
       
     case "ping":
