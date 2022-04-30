@@ -51,6 +51,10 @@ client.on("messageCreate", msg => {
     case "creategroup":
       client.commands.get('creategroup').execute(msg, args);
       break;
+
+    case "deletegroup":
+      client.commands.get('deletegroup').execute(msg, args);
+      break;
       
     case "ping":
       client.commands.get('ping').execute(msg, args);

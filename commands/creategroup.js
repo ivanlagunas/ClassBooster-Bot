@@ -1,24 +1,30 @@
+const { MessageEmbed } = require('discord.js');
+
 module.exports = {
   name: 'creategroup',
   description: "this command creates random private class groups, args: .creategroup membersNum(int), assignStudents(bool) // options: -m (no auto-assign members to groups), -n (create n groups, no assignation)",
-  execute(message, args) {
+  async execute(message, args) {
+
+    let embed = createEmbedMessage();
+    let output = await message.channel.send({embeds: [embed]});
     
     //gestión de errores
-    if (args.length < 1) message.channel.send("Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
+    if (args.length < 1) updateOutput(output, embed,"Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
     else {
       if (args.some(arg => arg == "-n")) { //create n groups
-        if (args[0] < 1) message.channel.send("Error: El número de grupos ha de ser mayor que 0, ejem: .creategroup 1 -n");
-        else if (!isNumeric(args[0])) message.channel.send("Error: No has indicado el número de grupos a crear, ejem: .creategroup 2 -n");
+        if (args[0] < 1) updateOutput(output, embed,"Error: El número de grupos ha de ser mayor que 0, ejem: .creategroup 1 -n");
+        else if (!isNumeric(args[0])) updateOutput(output, embed,"Error: No has indicado el número de grupos a crear, ejem: .creategroup 2 -n");
         else {
           let numGroups = args[0];
-          createNGroups(message.guild, message, numGroups);
+          await createNGroups(message.guild, numGroups);
+          updateOutput(output, embed, "Se han creado " + numGroups + " grupos sin asignación");
         }
         
       }
 
       else { //create groups with membersNum members
-        if (args[0] < 1) message.channel.send("Error: El número de integrantes ha de ser mayor que 0, ejem: .creategroup 2");
-        else if (!isNumeric(args[0])) message.channel.send("Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
+        if (args[0] < 1) updateOutput(output, embed,"Error: El número de integrantes ha de ser mayor que 0, ejem: .creategroup 2");
+        else if (!isNumeric(args[0])) updateOutput(output, embed,"Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
 
         else {
 
@@ -26,7 +32,8 @@ module.exports = {
         let autoAssign = true;
         if (args.some(arg => arg == "-m")) autoAssign = false;
         
-        createRandomGroups(message.guild, message, numMembers, autoAssign);
+        await createRandomGroups(message.guild, output, embed, numMembers, autoAssign);
+        console.log("holaaaaaaaaaaaaaaaaaaaaaaaaa")
         }
       }
     }
@@ -34,12 +41,12 @@ module.exports = {
 }
 
 
-async function createNGroups(server, message, numGroups) {
+async function createNGroups(server, numGroups) {
   createChannelsRoles(server, numGroups, -1, [], false);
   
 }
 
-async function createRandomGroups(server, message, numMembers, autoAssign) {
+async function createRandomGroups(server, output, embed, numMembers, autoAssign) {
   let members = await server.members.fetch();
   let students = getStudents(members);
   let numStudents = students.length;
@@ -49,16 +56,16 @@ async function createRandomGroups(server, message, numMembers, autoAssign) {
   console.log(numStudents + " " + numGroups);
 
   if (numGroups <= 0) {
-    message.channel.send("Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación");
+    updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación");
   }
 
   else {
-    createChannelsRoles(server, numGroups, numMembers, students, autoAssign);
+    createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
   }
   
 }
 
-async function createChannelsRoles(server, numGroups, numMembers, students, autoAssign) {
+async function createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign) {
 
   let teacherRole = server.roles.cache.find(role => role.name == "Teachers");
 
@@ -78,7 +85,7 @@ async function createChannelsRoles(server, numGroups, numMembers, students, auto
       .then(role => {
         groupRole = role;
         console.log("create role " + role.name);
-        students = assignRoles(numMembers, students, role);
+        students = assignRoles(output, embed, numMembers, students, role);
       })
       .catch(console.error);
     }
@@ -131,13 +138,17 @@ function getStudents(members) {
   return studentMembers;
 }
 
-function assignRoles(numMembers, students, role) {
+function assignRoles(output, embed, numMembers, students, role) {
+  let groupMembers = [];
+  
   for (let i = 0; i<numMembers; i++) {
     randomIndex = getRandomInt(0, students.length-1);
     console.log("random int: " +  randomIndex)
     students[randomIndex].roles.add(role);
-    students.splice(randomIndex, 1);
+    groupMembers.push(students.splice(randomIndex, 1)[0]);
   }
+  
+  addEmbedField(output, embed, role.name, groupMembers);
   return students;
 }
 
@@ -168,5 +179,33 @@ function isGroupChannel(channel) {
 
 function isNumeric(num){
   return !isNaN(num)
+}
+
+function updateOutput(output, embed, text) {
+  embed.setDescription(text);
+  output.edit({embeds: [embed]});
+}
+
+async function addEmbedField(output, embed, group, members) {
+  let stringNames = "";
+  if (members != null) {
+    members.forEach(member => {
+      aux = "\n" + member.user.username;
+      stringNames += aux;
+    })
+  }
+  
+  embed.addField(group, stringNames);
+  output.edit({embeds: [embed]});
+}
+
+function createEmbedMessage() {
+
+  embedMessage = new MessageEmbed()
+  	.setColor('#0099ff')
+  	.setTitle('Create Group')
+  	.setDescription('Creando grupos...')
+  
+  return embedMessage;
 }
     
