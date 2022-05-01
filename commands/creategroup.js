@@ -9,7 +9,11 @@ module.exports = {
     let output = await message.channel.send({embeds: [embed]});
     
     //gestión de errores
-    if (args.length < 1) updateOutput(output, embed,"Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
+    if (!message.member.roles.cache.some(role => role.name == "Teachers")) {
+      updateOutput(output, embed,"Error: Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
+    }
+    else if (args.length < 1) updateOutput(output, embed,"Error: No has indicado el número de integrantes por grupo, ejem: .creategroup 4");
+      
     else {
       if (args.some(arg => arg == "-n")) { //create n groups
         if (args[0] < 1) updateOutput(output, embed,"Error: El número de grupos ha de ser mayor que 0, ejem: .creategroup 1 -n");
@@ -33,7 +37,7 @@ module.exports = {
         if (args.some(arg => arg == "-m")) autoAssign = false;
         
         await createRandomGroups(message.guild, output, embed, numMembers, autoAssign);
-        console.log("holaaaaaaaaaaaaaaaaaaaaaaaaa")
+        updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
         }
       }
     }
@@ -42,8 +46,7 @@ module.exports = {
 
 
 async function createNGroups(server, numGroups) {
-  createChannelsRoles(server, numGroups, -1, [], false);
-  
+  await createChannelsRoles(server, "", "", numGroups, -1, [], false);
 }
 
 async function createRandomGroups(server, output, embed, numMembers, autoAssign) {
@@ -52,15 +55,13 @@ async function createRandomGroups(server, output, embed, numMembers, autoAssign)
   let numStudents = students.length;
   let numGroups = Math.ceil(numStudents/numMembers);
   //let numGroups = 5;
-  
-  console.log(numStudents + " " + numGroups);
 
   if (numGroups <= 0) {
     updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación");
   }
 
   else {
-    createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
+    await createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
   }
   
 }
@@ -90,28 +91,24 @@ async function createChannelsRoles(server, output, embed, numGroups, numMembers,
       .catch(console.error);
     }
       
-    server.channels.create('CB Group ' + (num + i), {
+    let category = await server.channels.create('CB Group ' + (num + i), {
     type: "GUILD_CATEGORY",
-    }).then(category => {
-      groupCategoryId = category.id;
-      if (autoAssign) {
-        category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false }).catch(err => console.log(err));
-        category.permissionOverwrites.create(groupRole, { VIEW_CHANNEL: true });
-        category.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
-      }
-      console.log("create category " + category.name);
     })
     .catch(console.error);
+
+    groupCategoryId = category.id;
+    if (autoAssign) {
+      await category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false })
+      await category.permissionOverwrites.create(groupRole, { VIEW_CHANNEL: true });
+      await category.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
+    }
+    console.log("create category " + category.name);
     
     server.channels.create("CB Chat Grupo " + (num + i), {
     type: "GUILD_TEXT",
     }).then(channel => {
       channel.setParent(groupCategoryId);
-      if (autoAssign) {
-        channel.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false }).catch(err => console.log(err));
-        channel.permissionOverwrites.create(groupRole, { VIEW_CHANNEL: true });
-        channel.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
-      }
+      
       console.log("create channel " + channel.name);
     });
 
@@ -119,11 +116,7 @@ async function createChannelsRoles(server, output, embed, numGroups, numMembers,
     type: "GUILD_VOICE",
     }).then(channel => {
     channel.setParent(groupCategoryId);
-      if (autoAssign) {
-        channel.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false }).catch(err => console.log(err));
-        channel.permissionOverwrites.create(groupRole, { VIEW_CHANNEL: true });
-        channel.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
-      }
+      
     console.log("create channel" + channel.name);
     });
   }
@@ -164,8 +157,10 @@ function getHigherGroupNum(server) {
   let aux = 0;
 
   if (groups != null) {
+    let name = "CB Group ";
+    let pad = name.length;
     groups.forEach(channel => {
-      var num = parseInt(channel.name.substr(channel.name.length - 1));
+      var num = parseInt(channel.name.substr(pad));
       if (num > aux) aux = num;
     });
   }
@@ -190,12 +185,12 @@ async function addEmbedField(output, embed, group, members) {
   let stringNames = "";
   if (members != null) {
     members.forEach(member => {
-      aux = "\n" + member.user.username;
+      aux = "\n" + member.toString();
       stringNames += aux;
     })
   }
   
-  embed.addField(group, stringNames);
+  embed.addField(group, stringNames, true);
   output.edit({embeds: [embed]});
 }
 

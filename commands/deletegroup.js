@@ -4,14 +4,21 @@ module.exports = {
   name: 'deletegroup',
   description: "this command deleted all channels and roles related to class groups created with this app",
   async execute(message, args) {
+
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
-    
-    await deleteGroupChannels(message.guild);
 
-    embed.setDescription("Grupos borrados con éxito.");
-    output.edit({embeds: [embed]});
-    
+    if (!message.member.roles.cache.some(role => role.name == "Teachers")) {
+      updateOutput(output, embed, "Error: Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
+    }
+
+    else {
+      
+      await deleteGroupChannels(message.guild);
+  
+      embed.setDescription("Grupos borrados con éxito.");
+      output.edit({embeds: [embed]});
+    }
   }
 }
 
@@ -20,14 +27,14 @@ async function deleteGroupChannels(server) {
   let roles = server.roles.cache.filter(role => isGroupRole(role));
 
   if (roles != null) {
-    roles.forEach((role) => {
+    await roles.forEach((role) => {
       role.delete();
       console.log("delete role:" + role.name);
     });
   }
 
   if (groups != null) {
-    groups.forEach((channel) => {
+    await groups.forEach((channel) => {
       let childs = channel.children;
       if (childs != null) {
         childs.forEach(channel => {
@@ -39,8 +46,6 @@ async function deleteGroupChannels(server) {
       console.log("delete category:" + channel.name);
     });
   }
-
-  return;
 }
 
 function isGroupChannel(channel) {
@@ -59,4 +64,9 @@ function createEmbedMessage() {
   	.setDescription('Borrando grupos...')
   
   return embedMessage;
+}
+
+function updateOutput(output, embed, text) {
+  embed.setDescription(text);
+  output.edit({embeds: [embed]});
 }
