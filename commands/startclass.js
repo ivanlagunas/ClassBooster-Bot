@@ -4,7 +4,7 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'startclass',
   description: "this command initialize the server with the default channels and roles",
-  async execute(message, args, db) {
+  async execute(message, args, db, invites) {
     let server = message.guild;
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
@@ -20,27 +20,30 @@ module.exports = {
     embed.setDescription("Creando links de invitación...");
     output.edit({embeds: [embed]});
     
-    let invite_links = await createInvitationLinks(channels.s_channel, channels.t_channel);
+    let invite_links = await createInvitationLinks(channels.s_channel, channels.t_channel, invites);
 
+    saveServer(db, server, invite_links);
+    
     embed.setDescription(`Clase creada con éxito!`);
-    embed.addField("Link para estudiantes", invite_links.s_url);
-    embed.addField("Link para profesores", invite_links.t_url);
+    embed.addField("Link para estudiantes", invite_links.s_inv.url);
+    embed.addField("Link para profesores", invite_links.t_inv.url);
     output.edit({embeds: [embed]});
-    console.log(`Students link: ${invite_links.s_url}\nTeachers link: ${invite_links.t_url}`);
+    console.log(`Students link: ${invite_links.s_inv.url}\nTeachers link: ${invite_links.t_inv.url}`);
   }
+}
 
+function saveServer(db, server, invite_links) {
+  let new_server = new Server(server.id, invite_links.s_inv.channelId, invite_links.t_inv.channelId);
+  db.get("server").then(servers_db => {
+    let server_index= servers_db.findIndex(guild => guild.id == server.id);
+    if (server_index != -1) {
+      servers_db.splice(server_index, 1);
+    }
 
-    /*var aux = new Server(message.guild.name, db);
-    db.get("server").then(result => {
-    if (!result || result.length < 1) {
-      aux.id = 1
-      result = [aux];
-    }
-    else {
-      aux.id = result.length + 1;
-      result.push(aux);
-    }
-    db.set("server", result);*/
+    servers_db.push(new_server);
+    db.set("server", servers_db);
+    console.log(servers_db);
+  });
 }
 
 function deleteChannels(server, message){
@@ -184,23 +187,26 @@ async function createChannelsRoles(server, member){ //create default categories 
 
 }
 
-async function createInvitationLinks(s_channel, t_channel) {
+async function createInvitationLinks(s_channel, t_channel, invites) {
 
-  var s_url, t_url;
+  var s_inv, t_inv;
+  invites[s_channel.guild.id] = [];
 
   await s_channel.createInvite({ maxAge: 0, maxUses: 0 })
     .then(inv => { 
       console.log(`${inv.channel.name} Invite Link: ${s_channel.guild.name} ${inv.url}`);
-      s_url = inv.url;
+      s_inv = inv;
+      invites[s_channel.guild.id].push({"code": inv.code, "uses": inv.uses});
     });
 
   await t_channel.createInvite({ maxAge: 0, maxUses: 0 })
     .then(inv => { 
       console.log(`${inv.channel.name} Invite Link: ${t_channel.guild.name} ${inv.url}`);
-      t_url = inv.url;            
+      t_inv = inv;
+      invites[t_channel.guild.id].push({"code": inv.code, "uses": inv.uses});
     });
 
-  return {"s_url": s_url, "t_url": t_url};
+  return {"s_inv": s_inv, "t_inv": t_inv};
 
 }
 
