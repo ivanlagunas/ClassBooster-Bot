@@ -78,6 +78,10 @@ client.on("messageCreate", msg => {
     case "deletegroup":
       client.commands.get('deletegroup').execute(msg, args);
       break;
+
+    case "doubt":
+    client.commands.get('doubt').execute(msg, args);
+    break;
       
     case "ping":
       client.commands.get('ping').execute(msg, args);
@@ -111,6 +115,8 @@ client.on('guildMemberAdd', async member => {
       }
     });
 });
+
+client.on("debug", ( e ) => console.log(e));
 
 function assignRole(member, inviteId) {
   db.get("server").then(servers_db => {
