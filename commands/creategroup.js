@@ -37,7 +37,6 @@ module.exports = {
         if (args.some(arg => arg == "-m")) autoAssign = false;
         
         await createRandomGroups(message.guild, output, embed, numMembers, autoAssign);
-        updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
         }
       }
     }
@@ -57,11 +56,12 @@ async function createRandomGroups(server, output, embed, numMembers, autoAssign)
   //let numGroups = 5;
 
   if (numGroups <= 0) {
-    updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación");
+    updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación.");
   }
 
   else {
     await createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
+    updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
   }
   
 }

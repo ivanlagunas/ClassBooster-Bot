@@ -1,4 +1,4 @@
-const Server = require("../servers")
+const Server = require("../interfaces/servers")
 const { MessageEmbed } = require('discord.js');
 
 module.exports = {
