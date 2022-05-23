@@ -9,7 +9,7 @@ module.exports = {
     let output = await message.channel.send({embeds: [embed]});
 
     if (!message.member.roles.cache.some(role => role.name == "Teachers")) {
-      updateOutput(output, embed, "Error: Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
+      updateOutput(output, embed, "**Error:** Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
     }
 
     else {

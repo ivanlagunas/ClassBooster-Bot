@@ -8,27 +8,43 @@ module.exports = {
     let server = message.guild;
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
-    
-    deleteChannels(server, message);
-    deleteRoles(server);
 
-    embed.setDescription("Creando canales...");
-    output.edit({embeds: [embed]});
-    
-    let channels = await createChannelsRoles(server, message.member);
+    db.get("server").then(async servers_db => {
+      let serverDB = servers_db.find(guild => guild.id == server.id);
+      if (serverDB != null && args[0] != "-reboot") {
+        embed.setDescription("**Warning:** Este comando borrará todos los canales/roles del servidor y creará nuevos enlaces de invitación. Si aún así quieres ejecutar este comando, prueba con la opción '-reboot'. Ejemplo: .startclass -reboot");
+        output.edit({embeds: [embed]});
+      }
+      else {  
 
-    embed.setDescription("Creando links de invitación...");
-    output.edit({embeds: [embed]});
-    
-    let invite_links = await createInvitationLinks(channels.s_channel, channels.t_channel, invites);
-
-    saveServer(db, server, invite_links);
-    
-    embed.setDescription(`Clase creada con éxito!`);
-    embed.addField("Link para estudiantes", invite_links.s_inv.url);
-    embed.addField("Link para profesores", invite_links.t_inv.url);
-    output.edit({embeds: [embed]});
-    console.log(`Students link: ${invite_links.s_inv.url}\nTeachers link: ${invite_links.t_inv.url}`);
+        if (message.member.roles.cache.some(role => role.name == "Teachers")) {
+          deleteChannels(server, message);
+          deleteRoles(server);
+      
+          embed.setDescription("Creando canales...");
+          output.edit({embeds: [embed]});
+          
+          let channels = await createChannelsRoles(server, message.member);
+      
+          embed.setDescription("Creando links de invitación...");
+          output.edit({embeds: [embed]});
+          
+          let invite_links = await createInvitationLinks(channels.s_channel, channels.t_channel, invites);
+      
+          saveServer(db, server, invite_links);
+          
+          embed.setDescription(`Clase creada con éxito!`);
+          embed.addField("Link para estudiantes", invite_links.s_inv.url);
+          embed.addField("Link para profesores", invite_links.t_inv.url);
+          output.edit({embeds: [embed]});
+          console.log(`Students link: ${invite_links.s_inv.url}\nTeachers link: ${invite_links.t_inv.url}`);
+        }
+        else {
+          embed.setDescription("**Error:** Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
+          output.edit({embeds: [embed]});
+        }
+      }
+    });
   }
 }
 
@@ -131,9 +147,10 @@ async function createChannelsRoles(server, member){ //create default categories 
 
   await server.channels.create('Sala de profesores', {
     type: "GUILD_CATEGORY",
-  }).then(category => {
+  }).then(async category => {
       teachersCategoryId = category.id;
-      category.permissionOverwrites.create(studentRole, { VIEW_CHANNEL: false });
+      await category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false })
+      await category.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
       console.log("create category" + category.name);
     })
     .catch(console.error);
@@ -160,9 +177,10 @@ async function createChannelsRoles(server, member){ //create default categories 
 
   await server.channels.create('Sala de estudio', {
     type: "GUILD_CATEGORY",
-  }).then(category => {
+  }).then(async category => {
       studentsCategoryId = category.id;
-      category.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: false });
+      await category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false })
+      await category.permissionOverwrites.create(studentRole, { VIEW_CHANNEL: true });
       console.log("create category" + category.name);
     })
     .catch(console.error);

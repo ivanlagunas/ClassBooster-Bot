@@ -9,6 +9,9 @@ const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD
 const prefix = '.';
 const invites = [];
 client.commands = new Discord.Collection();
+client.events = new Discord.Collection();
+
+///////////////INIT HANDLERS//////////////////////
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
@@ -17,9 +20,15 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 }
 
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+for (const file of eventFiles) {
+  const event = require(`./events/${file}`);
+
+  client.events.set(event.name, event);
+}
+
 ////////////////////DATABASE//////////////////////
 const db = new Database();
-db.empty();
 
 db.get("queue").then(result => {
   if (!result || result.length < 1) {
@@ -32,20 +41,6 @@ db.get("server").then(result => {
     db.set("server", []);
   }
 })
-
-////////////////////////////////////////////////////
-
-async function find_invite_by_code(invite_list, code) {
-  let invite = "";
-  
-  await invite_list.forEach (inv => {
-    if (inv.code == code) {
-        invite = inv;
-    }
-  });
-
-  return invite;
-}
 
 /////////////////////EVENTS/////////////////////////
 
@@ -89,85 +84,26 @@ client.on("messageCreate", msg => {
     case "queue":
       client.commands.get('queue').execute(msg, args, db);
       break;
+
+    case "deletequeue":
+      client.commands.get('deletequeue').execute(msg, args, db);
+      break;
       
     case "ping":
       client.commands.get('ping').execute(msg, args);
-      break;
-
-    case "adddb":
-      client.commands.get('addDB').execute(msg, args, db);
-      break;
-
-    case "deletedb":
-      client.commands.get('deleteDB').execute(msg, args, db);
       break;
       
   }
 });
 
 client.on('guildMemberAdd', async member => {
-
-    let invites_before_join = invites[member.guild.id];
-    let invites_after_join = await member.guild.invites.fetch();
-
-    invites_before_join.forEach(async inv => {
-      let aux = await find_invite_by_code(invites_after_join, inv.code);
-      if (aux != "") {
-        let uses = aux.uses;
-        if (inv.uses < uses) {
-          console.log("Joined with: " + aux.url);
-          inv.uses+=1;
-          assignRole(member, aux.channelId);
-        }
-      }
-    });
+  client.events.get('guildMemberAddHandler').execute(invites, db, member);
+  
 });
 
 client.on('voiceStateUpdate', (oldMemberVoice, newMemberVoice) => {
-  let newUserChannel = newMemberVoice.channel;
-  let oldUserChannel = oldMemberVoice.channel;
-
-  if((oldUserChannel == null && newUserChannel != null) || (newUserChannel != null && oldUserChannel != newUserChannel)) { //user joins channel
-    let member = newMemberVoice.member;
-    if (member.roles.cache.some(role => role.name == "Teachers")) {
-      db.get("queue").then(result => {
-
-        if (result != null) {
-          let queueIndex = result.findIndex(queue => queue.serverId == member.guild.id);
-          
-          if (queueIndex != -1 && result[queueIndex].memberQueue[0].channelId == newUserChannel.id) {
-            result[queueIndex].memberQueue.splice(0, 1); //eliminamos de la cola
-            db.set("queue", result);
-          }
-        }
-      });
-    } 
-  }
-  
-  else if(newUserChannel == null) {
-
-    //user leaves a voice channel
-
-  }
+  client.events.get('voiceStateHandler').execute(oldMemberVoice, newMemberVoice, db);
 });
-
-
-client.on("debug", ( e ) => console.log(e));
-
-
-function assignRole(member, inviteId) {
-  db.get("server").then(servers_db => {
-    let server= servers_db.find(guild => guild.id == member.guild.id);
-    if (server.teachersInviteId == inviteId) {
-      let teacherRole = member.guild.roles.cache.find(role => role.name == "Teachers");
-      if (teacherRole != null) member.roles.add(teacherRole);
-    }
-    else if (server.studentsInviteId == inviteId) {
-      let studentRole = member.guild.roles.cache.find(role => role.name == "Students");
-      if (studentRole != null) member.roles.add(studentRole);
-    }
-  });
-}
 
 
 keepAlive();
