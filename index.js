@@ -4,7 +4,7 @@ const Database = require("@replit/database");
 const keepAlive = require("./server");
 const Server = require("./interfaces/servers")
 
-const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_VOICE_STATES"]});
+const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_VOICE_STATES", "GUILD_PRESENCES"]});
 
 const prefix = '.';
 const invites = [];

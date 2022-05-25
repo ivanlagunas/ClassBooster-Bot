@@ -79,12 +79,17 @@ function createEmbedMessage() {
   return embedMessage;
 }
 
-function sendNextQueueMember(member, channel) {
+async function sendNextQueueMember(member, channel) {
   let studentString = member.toString();
   let channelString = channel.toString();
   let embed = createDMEmbedMessage(member.guild.name, "Se ha iniciado una cola de dudas, el primer estudiante en la cola es: " + studentString + ", en el canal de voz: " + channelString);
-  
-  member.send({embeds: [embed]});
+
+  let members = await member.guild.members.fetch();
+  let teachers = getOnlineTeachers(members);
+
+  teachers.forEach(teacher => {
+    teacher.send({embeds: [embed]})
+  })
 }
 
 function createDMEmbedMessage(serverName, description) {
@@ -95,4 +100,11 @@ function createDMEmbedMessage(serverName, description) {
   	.setDescription(description)
   
   return embedMessage;
+}
+
+function getOnlineTeachers(members) {
+
+  teachers = members.filter(member => member.presence?.status === "online" && member.roles.cache.some(role => role.name == "Teachers"));
+  return teachers;
+  
 }

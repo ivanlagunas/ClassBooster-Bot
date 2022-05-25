@@ -39,7 +39,7 @@ module.exports = {
   }
 }
 
-function sendNextQueueMember(teacher, serverQueue) {
+async function sendNextQueueMember(teacher, serverQueue) {
   let embed = null;
   if (serverQueue.length <= 0) {
     embed = createEmbedMessage(teacher.guild.name, "No hay más estudiantes en la cola.");
@@ -49,7 +49,14 @@ function sendNextQueueMember(teacher, serverQueue) {
     let channelString = "<#" + serverQueue[0].channelId + ">";
     embed = createEmbedMessage(teacher.guild.name, "Siguiente estudiante en la cola: " + studentString + ", en el canal de voz: " + channelString);
   }
-  teacher.send({embeds: [embed]});
+
+  let members = await teacher.guild.members.fetch();
+  let teachers = getOnlineTeachers(members);
+
+  teachers.forEach(teacher => {
+    teacher.send({embeds: [embed]})
+  });
+  
 }
 
 function createEmbedMessage(serverName, description) {
@@ -60,4 +67,11 @@ function createEmbedMessage(serverName, description) {
   	.setDescription(description)
   
   return embedMessage;
+}
+
+function getOnlineTeachers(members) {
+
+  teachers = members.filter(member => member.presence?.status === "online" && member.roles.cache.some(role => role.name == "Teachers"));
+  return teachers;
+  
 }
