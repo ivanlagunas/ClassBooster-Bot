@@ -2,7 +2,7 @@ const { MessageEmbed } = require('discord.js');
 
 module.exports = {
   name: 'creategroup',
-  description: "this command creates random private class groups, args: .creategroup membersNum(int), assignStudents(bool) // options: -m (no auto-assign members to groups), -n (create n groups, no assignation)",
+  description: "this command creates random private class groups, args: .creategroup membersNum(int), assignStudents(bool) // options: -m (no auto-assign members to groups), -n (create n groups, no assignation), -o (only assign online students)",
   async execute(message, args) {
 
     let embed = createEmbedMessage();
@@ -34,10 +34,12 @@ module.exports = {
 
         let numMembers = args[0];
         let autoAssign = true;
+        let online = false;
+          
         if (args.some(arg => arg == "-m")) autoAssign = false;
+        if (args.some(arg => arg == "-o")) online = true;
         
-        await createRandomGroups(message.guild, output, embed, numMembers, autoAssign);
-        updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
+        await createRandomGroups(message.guild, output, embed, numMembers, autoAssign, online);
         }
       }
     }
@@ -49,19 +51,19 @@ async function createNGroups(server, numGroups) {
   await createChannelsRoles(server, "", "", numGroups, -1, [], false);
 }
 
-async function createRandomGroups(server, output, embed, numMembers, autoAssign) {
+async function createRandomGroups(server, output, embed, numMembers, autoAssign, online) {
   let members = await server.members.fetch();
-  let students = getStudents(members);
+  let students = getStudents(members, online);
   let numStudents = students.length;
   let numGroups = Math.ceil(numStudents/numMembers);
-  //let numGroups = 5;
 
   if (numGroups <= 0) {
-    updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación");
+    updateOutput(output, embed,"Error: No hay usuarios con rol 'Student' en el servidor para poder crear los grupos. Prueba con la opción -n para crear servidores sin asignación.");
   }
 
   else {
     await createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
+    updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
   }
   
 }
@@ -123,20 +125,23 @@ async function createChannelsRoles(server, output, embed, numGroups, numMembers,
 
 }
 
-function getStudents(members) {
+function getStudents(members, online) {
   studentMembers = [];
   members.forEach(member => {
-    if (member.roles.cache.some(role => role.name == "Students")) studentMembers.push(member);
-    })
+    if (member.roles.cache.some(role => role.name == "Students")) {
+      if ((online && member.presence?.status=="online") || !online) studentMembers.push(member);
+    }
+  });
   return studentMembers;
 }
 
 function assignRoles(output, embed, numMembers, students, role) {
   let groupMembers = [];
   
-  for (let i = 0; i<numMembers; i++) {
+  for (let i = 0; i<numMembers && students.length > 0; i++) {
     randomIndex = getRandomInt(0, students.length-1);
-    console.log("random int: " +  randomIndex)
+    if (students[randomIndex] == undefined) console.log("undefined")
+    else console.log(students[randomIndex].user.username);
     students[randomIndex].roles.add(role);
     groupMembers.push(students.splice(randomIndex, 1)[0]);
   }

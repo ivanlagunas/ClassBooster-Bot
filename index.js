@@ -2,13 +2,16 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const Database = require("@replit/database");
 const keepAlive = require("./server");
-const Server = require("./servers")
+const Server = require("./interfaces/servers")
 
-const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS"] });
+const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "GUILD_VOICE_STATES", "GUILD_PRESENCES"]});
 
 const prefix = '.';
 const invites = [];
 client.commands = new Discord.Collection();
+client.events = new Discord.Collection();
+
+///////////////INIT HANDLERS//////////////////////
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
@@ -17,32 +20,27 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 }
 
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+for (const file of eventFiles) {
+  const event = require(`./events/${file}`);
+
+  client.events.set(event.name, event);
+}
+
 ////////////////////DATABASE//////////////////////
 const db = new Database();
-const startTestDB = [
-  {name: "Ivan", value: 1},
-  {name: "Paco", value: 2},
-]
 
-db.get("test").then(result => {
+db.get("queue").then(result => {
   if (!result || result.length < 1) {
-    db.set("test", startTestDB);
+    db.set("queue", []);
   }
 })
 
-////////////////////////////////////////////////////
-
-async function find_invite_by_code(invite_list, code) {
-  let invite = "";
-  
-  await invite_list.forEach (inv => {
-    if (inv.code == code) {
-        invite = inv;
-    }
-  });
-
-  return invite;
-}
+db.get("server").then(result => {
+  if (!result || result.length < 1) {
+    db.set("server", []);
+  }
+})
 
 /////////////////////EVENTS/////////////////////////
 
@@ -80,57 +78,32 @@ client.on("messageCreate", msg => {
       break;
 
     case "doubt":
-    client.commands.get('doubt').execute(msg, args);
-    break;
+      client.commands.get('doubt').execute(msg, args, db, client);
+      break;
+
+    case "queue":
+      client.commands.get('queue').execute(msg, args, db);
+      break;
+
+    case "deletequeue":
+      client.commands.get('deletequeue').execute(msg, args, db);
+      break;
       
     case "ping":
       client.commands.get('ping').execute(msg, args);
-      break;
-
-    case "adddb":
-      client.commands.get('addDB').execute(msg, args, db);
-      break;
-
-    case "deletedb":
-      client.commands.get('deleteDB').execute(msg, args, db);
       break;
       
   }
 });
 
 client.on('guildMemberAdd', async member => {
-
-    let invites_before_join = invites[member.guild.id];
-    let invites_after_join = await member.guild.invites.fetch();
-
-    invites_before_join.forEach(async inv => {
-      let aux = await find_invite_by_code(invites_after_join, inv.code);
-      if (aux != "") {
-        let uses = aux.uses;
-        if (inv.uses < uses) {
-          console.log("Joined with: " + aux.url);
-          inv.uses+=1;
-          assignRole(member, aux.channelId);
-        }
-      }
-    });
+  client.events.get('guildMemberAddHandler').execute(invites, db, member);
+  
 });
 
-client.on("debug", ( e ) => console.log(e));
-
-function assignRole(member, inviteId) {
-  db.get("server").then(servers_db => {
-    let server= servers_db.find(guild => guild.id == member.guild.id);
-    if (server.teachersInviteId == inviteId) {
-      let teacherRole = member.guild.roles.cache.find(role => role.name == "Teachers");
-      if (teacherRole != null) member.roles.add(teacherRole);
-    }
-    else if (server.studentsInviteId == inviteId) {
-      let studentRole = member.guild.roles.cache.find(role => role.name == "Students");
-      if (studentRole != null) member.roles.add(studentRole);
-    }
-  });
-}
+client.on('voiceStateUpdate', (oldMemberVoice, newMemberVoice) => {
+  client.events.get('voiceStateHandler').execute(oldMemberVoice, newMemberVoice, db);
+});
 
 
 keepAlive();
