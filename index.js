@@ -88,6 +88,10 @@ client.on("messageCreate", msg => {
     case "deletequeue":
       client.commands.get('deletequeue').execute(msg, args, db);
       break;
+
+    case "help": 
+      client.commands.get('help').execute(msg, args);
+      break;
       
     case "ping":
       client.commands.get('ping').execute(msg, args);

@@ -61,6 +61,7 @@ function createEmbedMessage() {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle('Delete Groups')
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription('Borrando grupos...')
   
   return embedMessage;

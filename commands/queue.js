@@ -34,6 +34,7 @@ function createEmbedMessage() {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle('Doubt Queue')
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription('Cargando cola de dudas...')
   
   return embedMessage;

@@ -233,6 +233,7 @@ function createEmbedMessage() {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle('Start Class')
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription('Inicializando clase...')
   
   return embedMessage;
