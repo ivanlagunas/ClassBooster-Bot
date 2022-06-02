@@ -64,6 +64,7 @@ function createEmbedMessage(serverName, description) {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle(serverName + " - Doubt Queue")
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription(description)
   
   return embedMessage;

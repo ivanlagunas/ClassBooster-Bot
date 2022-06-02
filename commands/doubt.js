@@ -74,6 +74,7 @@ function createEmbedMessage() {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle('Doubt Queue')
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription('Intentando unirte a la cola...')
   
   return embedMessage;
@@ -97,6 +98,7 @@ function createDMEmbedMessage(serverName, description) {
   embedMessage = new MessageEmbed()
   	.setColor('#0099ff')
   	.setTitle(serverName + " - Doubt Queue")
+    .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   	.setDescription(description)
   
   return embedMessage;
