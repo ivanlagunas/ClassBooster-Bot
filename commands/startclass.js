@@ -1,5 +1,6 @@
 const Server = require("../interfaces/servers")
 const { MessageEmbed } = require('discord.js');
+const { Permissions } = require('discord.js');
 
 module.exports = {
   name: 'startclass',
@@ -36,6 +37,7 @@ module.exports = {
           embed.setDescription(`Clase creada con éxito!`);
           embed.addField("Link para estudiantes", invite_links.s_inv.url);
           embed.addField("Link para profesores", invite_links.t_inv.url);
+          embed.setFooter({ text: "Si modificas los roles 'Students' o 'Teachers' puede que algunos comandos y funciones dejen de funcionar.", iconURL: 'https://i.imgur.com/MtCtrcK.png'})
           output.edit({embeds: [embed]});
           console.log(`Students link: ${invite_links.s_inv.url}\nTeachers link: ${invite_links.t_inv.url}`);
         }
@@ -89,17 +91,21 @@ async function createChannelsRoles(server, member){ //create default categories 
   await server.roles.create({
     name: 'Teachers',
     color: 'BLUE',
+    hoist: true,
+    permissions: [Permissions.FLAGS.MANAGE_CHANNELS, Permissions.FLAGS.MANAGE_GUILD, Permissions.FLAGS.MANAGE_MESSAGES, Permissions.FLAGS.MUTE_MEMBERS, Permissions.FLAGS.DEAFEN_MEMBERS, Permissions.FLAGS.MANAGE_NICKNAMES, Permissions.FLAGS.MANAGE_ROLES, Permissions.FLAGS.MANAGE_EVENTS, Permissions.FLAGS.MODERATE_MEMBERS],
     reason: 'role for teachers',
   })
     .then(role => {
       member.roles.add(role);
       teacherRole = role;
-      console.log("create role" + role.name);})
+      console.log("create role" + role.name);
+    })
     .catch(console.error);
 
   await server.roles.create({
     name: 'Students',
     color: 'RED',
+    hoist: true,
     reason: 'role for students',
   })
     .then(role => {

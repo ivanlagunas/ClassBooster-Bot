@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'deletegroup',
   description: "this command deleted all channels and roles related to class groups created with this app",
-  async execute(message, args) {
+  async execute(message) {
 
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});

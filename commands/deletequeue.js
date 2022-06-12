@@ -4,7 +4,7 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'deletequeue',
   description: "this command deletes the server queue.",
-  async execute(message, args, db) {
+  async execute(message, db) {
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
     let server = message.guild;

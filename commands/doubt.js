@@ -4,10 +4,9 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'doubt',
   description: "this command allows to join to the current doubt queue",
-  async execute(message, args, db, client) {
+  async execute(message, db, client) {
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
-
     if (!message.member.roles.cache.some(role => role.name == "Students")) {
       embed.setDescription("**Error:** Este comando solo puede ser ejecutado por miembros con el rol 'Students'.");
       output.edit({embeds: [embed]});

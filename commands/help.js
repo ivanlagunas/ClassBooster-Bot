@@ -98,7 +98,7 @@ function createErrorEmbedMessage(command) {
   	.setColor('#0099ff')
   	.setTitle('Help Command')
     .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
-    .setDescription('El comando "' + command + '" no existe.')
+    .setDescription('**Error:** El comando "' + command + '" no existe.')
   
   return embedMessage;
 }
