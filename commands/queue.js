@@ -3,7 +3,7 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'queue',
   description: "allows to see the server doubt queue.",
-  async execute(message, args, db) {
+  async execute(message, db) {
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
     let server = message.guild;

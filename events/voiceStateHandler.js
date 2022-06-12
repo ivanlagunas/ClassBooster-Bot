@@ -12,8 +12,8 @@ module.exports = {
       db.get("queue").then(result => {
         if (result != null) {
           let queueIndex = result.findIndex(queue => queue.serverId == member.guild.id);
-          
-          if (queueIndex != -1 && result[queueIndex].memberQueue[0].channelId == newUserChannel.id) {
+       
+          if (queueIndex != -1 && result[queueIndex].memberQueue.length > 0 && result[queueIndex].memberQueue[0].channelId == newUserChannel.id) {
             result[queueIndex].memberQueue.splice(0, 1); //eliminamos de la cola
             db.set("queue", result);
             sendNextQueueMember(member, result[queueIndex].memberQueue);

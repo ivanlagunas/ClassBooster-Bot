@@ -74,19 +74,19 @@ client.on("messageCreate", msg => {
       break;
 
     case "deletegroup":
-      client.commands.get('deletegroup').execute(msg, args);
+      client.commands.get('deletegroup').execute(msg);
       break;
 
     case "doubt":
-      client.commands.get('doubt').execute(msg, args, db, client);
+      client.commands.get('doubt').execute(msg, db, client);
       break;
 
     case "queue":
-      client.commands.get('queue').execute(msg, args, db);
+      client.commands.get('queue').execute(msg, db);
       break;
 
     case "deletequeue":
-      client.commands.get('deletequeue').execute(msg, args, db);
+      client.commands.get('deletequeue').execute(msg, db);
       break;
 
     case "help": 
