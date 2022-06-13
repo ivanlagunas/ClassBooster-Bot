@@ -22,7 +22,7 @@ function createHelpEmbedMessage() {
   	.setTitle('Help Command')
     .setAuthor({ name: 'ClassBooster', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
     .addField("**Comandos para todos**", ".ping, .help, .queue")
-    .addField("**Comandos para profesores**", ".startclass, .creategroup, .deletegroup, .deletequeue")
+    .addField("**Comandos para profesores**", ".startclass, .sendlinks, .generatenewlinks, .creategroup, .deletegroup, .deletequeue")
     .addField("**Comandos para estudiantes**", ".doubt")
     .setFooter({ text: 'Para más información sobre un comando, escribe .help <nombre_comando>', iconURL: 'https://i.imgur.com/YKgRxqd.png'})
   
@@ -55,6 +55,14 @@ function commandHelp(command) {
 
     case "deletequeue":
       embed = createCommandEmbedMessage("deletequeue", ".deletequeue", 'Borra la cola de dudas del servidor.', [], "Profesores");
+      break;
+
+    case "generatenewlinks":
+      embed = createCommandEmbedMessage("generatenewlinks", ".generatenewlinks", 'Elimina los enlaces de invitación y crea unos nuevos.', [], "Profesores");
+      break;
+
+    case "sendlinks":
+      embed = createCommandEmbedMessage("sendlinks", ".sendlinks", 'Envía los enlaces de invitación del servidor por mensaje privado.', [], "Profesores");
       break;
 
     case "help": 

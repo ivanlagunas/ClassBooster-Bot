@@ -7,7 +7,18 @@ module.exports = {
   async execute(message, db, client) {
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
-    if (!message.member.roles.cache.some(role => role.name == "Students")) {
+    let serverDB;
+    
+    await db.get("server").then(async servers_db => {
+      serverDB = servers_db.find(guild => guild.id == message.guild.id);
+    });
+
+    if (serverDB == null || !serverDB.init) {
+        embed.setDescription("**Error**: El servidor no está inicializado. Utiliza el comando .startclass para poder inicializarlo. Puedes obtener más información introduciendo el comando .help startclass");
+      output.edit({embeds: [embed]});
+    }
+    
+    else if (!message.member.roles.cache.some(role => role.name == "Students")) {
       embed.setDescription("**Error:** Este comando solo puede ser ejecutado por miembros con el rol 'Students'.");
       output.edit({embeds: [embed]});
     }
@@ -104,8 +115,8 @@ function createDMEmbedMessage(serverName, description) {
 }
 
 function getOnlineTeachers(members) {
-
-  teachers = members.filter(member => member.presence?.status === "online" && member.roles.cache.some(role => role.name == "Teachers"));
+  let validStatus = ["online", "idle"];
+  teachers = members.filter(member => validStatus.includes(member.presence?.status) && member.roles.cache.some(role => role.name == "Teachers"));
   return teachers;
   
 }

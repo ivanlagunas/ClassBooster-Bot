@@ -7,25 +7,37 @@ module.exports = {
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
     let server = message.guild;
+    let serverDB;
     
-    db.get("queue").then(result => {
-      if (result == null) {
-        embed.setDescription("La cola de dudas está vacía.");
-        output.edit({embeds: [embed]});
-      }
+    await db.get("server").then(async servers_db => {
+      serverDB = servers_db.find(guild => guild.id == message.guild.id);
+    });
 
-      else {
-        let queueIndex = result.findIndex(queue => queue.serverId == server.id);
-        if (queueIndex == -1 || result[queueIndex].memberQueue.length <= 0) {
+    if (serverDB == null || !serverDB.init) {
+        embed.setDescription("**Error**: El servidor no está inicializado. Utiliza el comando .startclass para poder inicializarlo. Puedes obtener más información introduciendo el comando .help startclass");
+      output.edit({embeds: [embed]});
+    }
+
+    else {
+      db.get("queue").then(result => {
+        if (result == null) {
           embed.setDescription("La cola de dudas está vacía.");
           output.edit({embeds: [embed]});
         }
+  
         else {
-          addQueueEmbed(embed, result[queueIndex].memberQueue, output);
+          let queueIndex = result.findIndex(queue => queue.serverId == server.id);
+          if (queueIndex == -1 || result[queueIndex].memberQueue.length <= 0) {
+            embed.setDescription("La cola de dudas está vacía.");
+            output.edit({embeds: [embed]});
+          }
+          else {
+            addQueueEmbed(embed, result[queueIndex].memberQueue, output);
+          }
         }
-      }
-        
-    });
+          
+      });
+    }
   }
 }
 

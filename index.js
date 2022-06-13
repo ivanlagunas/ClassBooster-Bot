@@ -70,11 +70,11 @@ client.on("messageCreate", msg => {
       break;
 
     case "creategroup":
-      client.commands.get('creategroup').execute(msg, args);
+      client.commands.get('creategroup').execute(msg, args, db);
       break;
 
     case "deletegroup":
-      client.commands.get('deletegroup').execute(msg);
+      client.commands.get('deletegroup').execute(msg, db);
       break;
 
     case "doubt":
@@ -89,6 +89,14 @@ client.on("messageCreate", msg => {
       client.commands.get('deletequeue').execute(msg, db);
       break;
 
+    case "generatenewlinks":
+      client.commands.get('generatenewlinks').execute(msg, db, invites);
+      break;
+
+    case "sendlinks":
+      client.commands.get('sendlinks').execute(msg, db);
+      break;
+      
     case "help": 
       client.commands.get('help').execute(msg, args);
       break;

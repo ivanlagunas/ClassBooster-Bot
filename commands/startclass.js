@@ -9,16 +9,18 @@ module.exports = {
     let server = message.guild;
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
+    let init = false;
 
-    db.get("server").then(async servers_db => {
+    await db.get("server").then(async servers_db => {
       let serverDB = servers_db.find(guild => guild.id == server.id);
+      init = (serverDB != null);
       if (serverDB != null && args[0] != "-reboot") {
         embed.setDescription("**Warning:** Este comando borrará todos los canales/roles del servidor y creará nuevos enlaces de invitación. Si aún así quieres ejecutar este comando, prueba con la opción '-reboot'. Ejemplo: .startclass -reboot");
         output.edit({embeds: [embed]});
       }
       else {  
 
-        if (message.member.roles.cache.some(role => role.name == "Teachers")) {
+        if (!init || message.member.roles.cache.some(role => role.name == "Teachers")) {
           deleteChannels(server, message);
           deleteRoles(server);
       
@@ -34,11 +36,15 @@ module.exports = {
       
           saveServer(db, server, invite_links);
           
-          embed.setDescription(`Clase creada con éxito!`);
-          embed.addField("Link para estudiantes", invite_links.s_inv.url);
-          embed.addField("Link para profesores", invite_links.t_inv.url);
+          embed.setDescription(`**Clase creada con éxito!**\n\nSe han enviado los enlaces de invitación para profesores y alumnos por mensaje privado. Si no te aparecen, ejecuta el comando .sendlinks.`);
           embed.setFooter({ text: "Si modificas los roles 'Students' o 'Teachers' puede que algunos comandos y funciones dejen de funcionar.", iconURL: 'https://i.imgur.com/MtCtrcK.png'})
           output.edit({embeds: [embed]});
+          
+          let embed2 = createEmbedMessage();
+          embed2.setDescription(`Enlaces de invitación del servidor ${server.name}`);
+          embed2.addField("Link para estudiantes", invite_links.s_inv.url);
+          embed2.addField("Link para profesores", invite_links.t_inv.url);
+          message.member.send(({embeds: [embed2]}));
           console.log(`Students link: ${invite_links.s_inv.url}\nTeachers link: ${invite_links.t_inv.url}`);
         }
         else {
@@ -51,23 +57,20 @@ module.exports = {
 }
 
 function saveServer(db, server, invite_links) {
-  let new_server = new Server(server.id, invite_links.s_inv.channelId, invite_links.t_inv.channelId);
+  let new_server = new Server(server.id, invite_links.s_inv.url, invite_links.t_inv.url);
   db.get("server").then(servers_db => {
     let server_index= servers_db.findIndex(guild => guild.id == server.id);
     if (server_index != -1) {
       servers_db.splice(server_index, 1);
     }
-
     servers_db.push(new_server);
     db.set("server", servers_db);
-    console.log(servers_db);
   });
 }
 
 function deleteChannels(server, message){
   server.channels.cache.forEach((channel) => {
       if (channel.id != message.channel.id) {
-        console.log("delete channel:" + channel.name);
         channel.delete();
       }
   });
@@ -77,7 +80,6 @@ function deleteRoles(server) {
   server.roles.cache.forEach((role) => {
     if (role.name != "@everyone" && role.name != "ClassBooster") {
       role.delete();
-      console.log("delete role:" + role.name);
     }
   });
 }
@@ -98,7 +100,6 @@ async function createChannelsRoles(server, member){ //create default categories 
     .then(role => {
       member.roles.add(role);
       teacherRole = role;
-      console.log("create role" + role.name);
     })
     .catch(console.error);
 
@@ -110,18 +111,17 @@ async function createChannelsRoles(server, member){ //create default categories 
   })
     .then(role => {
       studentRole = role;
-      console.log("create role" + role.name);})
+    })
     .catch(console.error);
 
 
   //general category
   var generalCategoryId;
 
-  await server.channels.create('Clase', {
+  await server.channels.create('📝 - Clase', {
     type: "GUILD_CATEGORY",
   }).then(category => {
       generalCategoryId = category.id;
-      console.log("create category" + category.name);
     })
     .catch(console.error);
 
@@ -130,34 +130,30 @@ async function createChannelsRoles(server, member){ //create default categories 
     type: "GUILD_TEXT",
   }).then(channel => {
     channel.setParent(generalCategoryId);
-    console.log("create channel" + channel.name);
   });
 
   await server.channels.create("Dudas", {
     type: "GUILD_TEXT",
   }).then(channel => {
     channel.setParent(generalCategoryId);
-    console.log("create channel" + channel.name);
   });
 
   await server.channels.create("Aula General", {
     type: "GUILD_VOICE",
   }).then(channel => {
     channel.setParent(generalCategoryId);
-    console.log("create channel" + channel.name);
   });
 
   
   //teachers category
   var teachersCategoryId;
 
-  await server.channels.create('Sala de profesores', {
+  await server.channels.create('📏 - Sala de profesores', {
     type: "GUILD_CATEGORY",
   }).then(async category => {
       teachersCategoryId = category.id;
       await category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false })
       await category.permissionOverwrites.create(teacherRole, { VIEW_CHANNEL: true });
-      console.log("create category" + category.name);
     })
     .catch(console.error);
 
@@ -167,27 +163,24 @@ async function createChannelsRoles(server, member){ //create default categories 
   }).then(channel => {
     channel.setParent(teachersCategoryId);
     teacherMainChannel = channel;
-    console.log("create channel" + channel.name);
   });
 
   done = await server.channels.create("Profesores - Voz", {
     type: "GUILD_VOICE",
   }).then(channel => {
     channel.setParent(teachersCategoryId);
-    console.log("create channel" + channel.name);
   });
 
   //students category
 
   var studentsCategoryId;
 
-  await server.channels.create('Sala de estudio', {
+  await server.channels.create('📖 - Sala de estudio', {
     type: "GUILD_CATEGORY",
   }).then(async category => {
       studentsCategoryId = category.id;
       await category.permissionOverwrites.create(server.roles.everyone, { VIEW_CHANNEL: false })
       await category.permissionOverwrites.create(studentRole, { VIEW_CHANNEL: true });
-      console.log("create category" + category.name);
     })
     .catch(console.error);
 
@@ -197,14 +190,12 @@ async function createChannelsRoles(server, member){ //create default categories 
   }).then(channel => {
     channel.setParent(studentsCategoryId);
     studentMainChannel = channel;
-    console.log("create channel" + channel.name);
   });
 
   await server.channels.create("Alumnos - Voz", {
     type: "GUILD_VOICE",
   }).then(channel => {
     channel.setParent(studentsCategoryId);
-    console.log("create channel" + channel.name);
   });
 
   return {"s_channel": studentMainChannel, "t_channel": teacherMainChannel};
@@ -216,16 +207,14 @@ async function createInvitationLinks(s_channel, t_channel, invites) {
   var s_inv, t_inv;
   invites[s_channel.guild.id] = [];
 
-  await s_channel.createInvite({ maxAge: 0, maxUses: 0 })
+  await s_channel.createInvite({ maxAge: 0, maxUses: 0, unique: true })
     .then(inv => { 
-      console.log(`${inv.channel.name} Invite Link: ${s_channel.guild.name} ${inv.url}`);
       s_inv = inv;
       invites[s_channel.guild.id].push({"code": inv.code, "uses": inv.uses});
     });
 
-  await t_channel.createInvite({ maxAge: 0, maxUses: 0 })
+  await t_channel.createInvite({ maxAge: 0, maxUses: 0, unique: true })
     .then(inv => { 
-      console.log(`${inv.channel.name} Invite Link: ${t_channel.guild.name} ${inv.url}`);
       t_inv = inv;
       invites[t_channel.guild.id].push({"code": inv.code, "uses": inv.uses});
     });

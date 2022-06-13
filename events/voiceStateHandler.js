@@ -71,8 +71,8 @@ function createEmbedMessage(serverName, description) {
 }
 
 function getOnlineTeachers(members) {
-
-  teachers = members.filter(member => member.presence?.status === "online" && member.roles.cache.some(role => role.name == "Teachers"));
+  let validStatus = ["online", "idle"];
+  teachers = members.filter(member => validStatus.includes(member.presence?.status) && member.roles.cache.some(role => role.name == "Teachers"));
   return teachers;
   
 }

@@ -3,12 +3,22 @@ const { MessageEmbed } = require('discord.js');
 module.exports = {
   name: 'deletegroup',
   description: "this command deleted all channels and roles related to class groups created with this app",
-  async execute(message) {
+  async execute(message, db) {
 
     let embed = createEmbedMessage();
     let output = await message.channel.send({embeds: [embed]});
+    let serverDB;
+    
+    await db.get("server").then(async servers_db => {
+      serverDB = servers_db.find(guild => guild.id == message.guild.id);
+    });
 
-    if (!message.member.roles.cache.some(role => role.name == "Teachers")) {
+    if (serverDB == null || !serverDB.init) {
+        embed.setDescription("**Error**: El servidor no está inicializado. Utiliza el comando .startclass para poder inicializarlo. Puedes obtener más información introduciendo el comando .help startclass");
+      output.edit({embeds: [embed]});
+    }
+
+    else if (!message.member.roles.cache.some(role => role.name == "Teachers")) {
       updateOutput(output, embed, "**Error:** Este comando solo puede ser ejecutado por miembros con el rol 'Teachers'.");
     }
 

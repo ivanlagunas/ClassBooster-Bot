@@ -13,7 +13,7 @@ module.exports = {
         if (inv.uses < uses) {
           console.log("Joined with: " + aux.url);
           inv.uses+=1;
-          assignRole(member, db, aux.channelId);
+          assignRole(member, db, aux.url);
         }
       }
     });
