@@ -61,7 +61,7 @@ async function updateDoubtQueue(message, db, client, embed, output) {
             }
           }
           else {
-            embed.setDescription("**Error:** Ya estas en la cola.");
+            embed.setDescription("**Error:** Ya estás en la cola.");
             output.edit({embeds: [embed]});
             return;
           }

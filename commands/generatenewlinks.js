@@ -27,7 +27,7 @@ module.exports = {
       let text_channels = message.guild.channels.cache.filter(channel => channel.type == "GUILD_TEXT")
 
       if (text_channels.size < 2) {
-        embed.setDescription("**Error**: No hay canales de texto suficientes para crear los links de invitación. Crea nuevos canales de texto manualmente o vuelve a inicializar el servidor con el comando .startclass (está última opción eliminará todo el contenido del servidor)");
+        embed.setDescription("**Error**: No hay canales de texto suficientes para crear los enlaces de invitación. Crea nuevos canales de texto manualmente o vuelve a inicializar el servidor con el comando .startclass (esta última opción eliminará todo el contenido del servidor)");
       output.edit({embeds: [embed]});
       }
 

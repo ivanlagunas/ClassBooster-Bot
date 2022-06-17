@@ -26,6 +26,7 @@ module.exports = {
     else {
       if (args.some(arg => arg == "-n")) { //create n groups
         if (args[0] < 1) updateOutput(output, embed,"**Error**: El número de grupos ha de ser mayor que 0, ejem: .creategroup 1 -n");
+        else if (args[0] > 50) updateOutput(output, embed,"**Error**: El número de grupos ha de ser menor o igual a 50, ejem: .creategroup 50 -n");
         else if (!isNumeric(args[0])) updateOutput(output, embed,"**Error**: No has indicado el número de grupos a crear, ejem: .creategroup 2 -n");
         else {
           let numGroups = args[0];
@@ -72,7 +73,8 @@ async function createRandomGroups(server, output, embed, numMembers, autoAssign,
 
   else {
     await createChannelsRoles(server, output, embed, numGroups, numMembers, students, autoAssign);
-    updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
+    if (autoAssign) updateOutput(output, embed, "Se han creado grupos aleatorios de " + numMembers + " integrantes.");
+    else updateOutput(output, embed, "Se han creado grupos de " + numMembers + " integrantes."); 
   }
   
 }
